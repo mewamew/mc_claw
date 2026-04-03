@@ -1,0 +1,70 @@
+{
+  "name": "small_house",
+  "description": "5x5 温馨橡木小屋，圆石地基，木板墙壁和屋顶，带门和窗户，内部有工作台、熔炉、箱子、床和火把照明",
+  "size": { "width": 5, "depth": 5, "height": 4 },
+  "materials": {
+    "cobblestone": 25,
+    "oak_planks": 82,
+    "oak_door": 1,
+    "torch": 8,
+    "crafting_table": 1,
+    "furnace": 1,
+    "chest": 1
+  },
+  "layers": [
+    {
+      "y": 0,
+      "comment": "地基层 - 圆石",
+      "blocks": [
+        [0,0,"cobblestone"],[1,0,"cobblestone"],[2,0,"cobblestone"],[3,0,"cobblestone"],[4,0,"cobblestone"],
+        [0,1,"cobblestone"],[1,1,"cobblestone"],[2,1,"cobblestone"],[3,1,"cobblestone"],[4,1,"cobblestone"],
+        [0,2,"cobblestone"],[1,2,"cobblestone"],[2,2,"cobblestone"],[3,2,"cobblestone"],[4,2,"cobblestone"],
+        [0,3,"cobblestone"],[1,3,"cobblestone"],[2,3,"cobblestone"],[3,3,"cobblestone"],[4,3,"cobblestone"],
+        [0,4,"cobblestone"],[1,4,"cobblestone"],[2,4,"cobblestone"],[3,4,"cobblestone"],[4,4,"cobblestone"]
+      ]
+    },
+    {
+      "y": 1,
+      "comment": "墙壁第一层 - 前面留门洞",
+      "blocks": [
+        [0,0,"oak_planks"],[1,0,"oak_planks"],[3,0,"oak_planks"],[4,0,"oak_planks"],
+        [0,1,"oak_planks"],[4,1,"oak_planks"],
+        [0,2,"oak_planks"],[4,2,"oak_planks"],
+        [0,3,"oak_planks"],[4,3,"oak_planks"],
+        [0,4,"oak_planks"],[1,4,"oak_planks"],[2,4,"oak_planks"],[3,4,"oak_planks"],[4,4,"oak_planks"]
+      ]
+    },
+    {
+      "y": 2,
+      "comment": "墙壁第二层 - 前面留门洞上方，侧面留窗",
+      "blocks": [
+        [0,0,"oak_planks"],[1,0,"oak_planks"],[3,0,"oak_planks"],[4,0,"oak_planks"],
+        [0,1,"oak_planks"],[4,1,"oak_planks"],
+        [0,2,"oak_planks"],[4,2,"oak_planks"],
+        [0,3,"oak_planks"],[4,3,"oak_planks"],
+        [0,4,"oak_planks"],[1,4,"oak_planks"],[2,4,"oak_planks"],[3,4,"oak_planks"],[4,4,"oak_planks"]
+      ]
+    },
+    {
+      "y": 3,
+      "comment": "屋顶层 - 完整覆盖",
+      "blocks": [
+        [0,0,"oak_planks"],[1,0,"oak_planks"],[2,0,"oak_planks"],[3,0,"oak_planks"],[4,0,"oak_planks"],
+        [0,1,"oak_planks"],[1,1,"oak_planks"],[2,1,"oak_planks"],[3,1,"oak_planks"],[4,1,"oak_planks"],
+        [0,2,"oak_planks"],[1,2,"oak_planks"],[2,2,"oak_planks"],[3,2,"oak_planks"],[4,2,"oak_planks"],
+        [0,3,"oak_planks"],[1,3,"oak_planks"],[2,3,"oak_planks"],[3,3,"oak_planks"],[4,3,"oak_planks"],
+        [0,4,"oak_planks"],[1,4,"oak_planks"],[2,4,"oak_planks"],[3,4,"oak_planks"],[4,4,"oak_planks"]
+      ]
+    }
+  ],
+  "furniture": [
+    { "dx": 2, "dy": 1, "dz": 0, "block": "oak_door", "comment": "正门" },
+    { "dx": 1, "dy": 1, "dz": 1, "block": "crafting_table", "comment": "工作台" },
+    { "dx": 1, "dy": 1, "dz": 2, "block": "furnace", "comment": "熔炉" },
+    { "dx": 1, "dy": 1, "dz": 3, "block": "chest", "comment": "箱子" },
+    { "dx": 3, "dy": 1, "dz": 3, "block": "torch", "comment": "火把-右后" },
+    { "dx": 1, "dy": 1, "dz": 3, "block": "torch", "comment": "火把-左后" },
+    { "dx": 0, "dy": 2, "dz": -1, "block": "torch", "comment": "门外火把-左" },
+    { "dx": 4, "dy": 2, "dz": -1, "block": "torch", "comment": "门外火把-右" }
+  ]
+}

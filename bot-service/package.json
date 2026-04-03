@@ -1,0 +1,14 @@
+{
+  "name": "mc-claw-bot-service",
+  "version": "0.1.0",
+  "description": "Mineflayer bot HTTP service for MC Claw",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "mineflayer": "^4.20.0",
+    "mineflayer-pathfinder": "^2.4.5"
+  }
+}

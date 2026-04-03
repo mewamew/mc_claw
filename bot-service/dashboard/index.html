@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QClaw 监控面板</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: 'Courier New', monospace; background: #0f0f1a; color: #e0e0e0; display: flex; flex-direction: column; }
+
+  /* ===== Header ===== */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: #0a0a18; border-bottom: 1px solid #1a1a3e; flex-shrink: 0; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header h1 { color: #00d4ff; font-size: 16px; letter-spacing: 1px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #4caf50; }
+  .dot.online { animation: pulse 2s infinite; }
+  .dot.offline { background: #f44336; animation: none; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .conn-label { font-size: 11px; color: #4caf50; }
+  .conn-label.offline { color: #f44336; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .refresh-time { color: #444; font-size: 11px; }
+
+  /* ===== Status Panel ===== */
+  .status-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px 16px; background: #0d0d20; border-bottom: 1px solid #1a1a3e; flex-shrink: 0; }
+  .status-card { background: #14142a; border: 1px solid #1e1e40; border-radius: 8px; padding: 12px 14px; }
+  .card-title { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .card-icon { font-size: 14px; }
+
+  /* Progress bar */
+  .bar-wrap { background: #1a1a2e; border-radius: 4px; height: 8px; margin-bottom: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease, background 0.5s ease; }
+  .bar-fill.good { background: linear-gradient(90deg, #2e7d32, #4caf50); }
+  .bar-fill.warn { background: linear-gradient(90deg, #e65100, #ff9800); }
+  .bar-fill.danger { background: linear-gradient(90deg, #b71c1c, #f44336); }
+  .card-value { font-size: 20px; font-weight: bold; }
+  .card-value.good { color: #4caf50; }
+  .card-value.warn { color: #ff9800; }
+  .card-value.danger { color: #f44336; }
+  .card-sub { font-size: 10px; color: #555; margin-top: 2px; }
+
+  /* Position card */
+  .pos-grid { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+  .pos-axis { color: #555; font-size: 11px; }
+  .pos-val { font-size: 13px; font-weight: bold; color: #ccc; }
+
+  /* State card */
+  .state-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+  .state-label { color: #555; font-size: 11px; }
+  .state-val { font-size: 12px; color: #ccc; font-weight: bold; }
+
+  /* ===== Inventory Strip ===== */
+  .inv-strip { padding: 8px 16px; background: #0d0d20; border-bottom: 1px solid #1a1a3e; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+  .inv-title { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+  .inv-count { color: #00d4ff; font-size: 11px; font-weight: bold; }
+  .inv-items { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; overflow: hidden; max-height: 40px; }
+  .inv-item { background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 4px; padding: 2px 8px; font-size: 11px; color: #aaa; white-space: nowrap; }
+  .inv-item .count { color: #00d4ff; margin-left: 3px; }
+  .inv-empty { color: #333; font-size: 11px; font-style: italic; }
+
+  /* ===== Main: Sidebar + Timeline ===== */
+  .main { flex: 1; display: flex; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 38%; min-width: 300px; display: flex; flex-direction: column; border-right: 1px solid #1a1a3e; overflow-y: auto; }
+  .sidebar-section { padding: 10px 12px; border-bottom: 1px solid #1a1a3e; }
+  .sidebar-section h2 { color: #00d4ff; font-size: 12px; margin-bottom: 8px; }
+
+  .report-box { background: #14142a; border: 1px solid #1e1e40; border-radius: 6px; padding: 10px; }
+  .report-field { margin-bottom: 8px; }
+  .report-label { color: #00d4ff; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .report-value { font-size: 12px; margin-top: 2px; line-height: 1.5; color: #ddd; }
+  .no-report { color: #444; font-style: italic; font-size: 12px; }
+
+  /* Collapsible */
+  .collapse-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; padding: 8px 12px; border-bottom: 1px solid #1a1a3e; }
+  .collapse-header:hover { background: #1a1a30; }
+  .collapse-header h2 { color: #00d4ff; font-size: 12px; margin: 0; display: flex; align-items: center; gap: 6px; }
+  .collapse-arrow { color: #444; font-size: 10px; transition: transform 0.2s; }
+  .collapse-header.open .collapse-arrow { transform: rotate(90deg); }
+  .collapse-body { display: none; padding: 8px 12px; border-bottom: 1px solid #1a1a3e; max-height: 250px; overflow-y: auto; font-size: 11px; }
+  .collapse-body.open { display: block; }
+  .tag { display: inline-block; background: #1a1a3e; padding: 0 5px; border-radius: 3px; font-size: 10px; color: #888; }
+
+  .landmark { display: flex; gap: 6px; padding: 3px 0; border-bottom: 1px solid #0f0f1a; }
+  .landmark-type { color: #4caf50; min-width: 100px; }
+  .landmark-pos { color: #666; }
+  .exp-item { padding: 4px 0; border-bottom: 1px solid #0f0f1a; }
+  .exp-action { color: #ff9800; font-weight: bold; font-size: 11px; }
+  .exp-solution { color: #4caf50; font-size: 10px; }
+
+  /* Timeline */
+  .timeline-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .timeline-header { padding: 8px 14px; border-bottom: 1px solid #1a1a3e; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
+  .timeline-header h2 { color: #00d4ff; font-size: 12px; }
+  .timeline-count { color: #444; font-size: 10px; }
+  .timeline { flex: 1; overflow-y: auto; padding: 6px 10px; }
+
+  .tl-item { padding: 6px 8px; border-left: 3px solid #1a1a3e; margin-left: 4px; margin-bottom: 4px; border-radius: 0 4px 4px 0; }
+  .tl-item:hover { background: #1a1a30; }
+  .tl-item.tl-ok { border-left-color: #4caf50; }
+  .tl-item.tl-err { border-left-color: #f44336; }
+  .tl-item.tl-report { border-left-color: #00d4ff; background: #14142a; }
+  .tl-header { display: flex; gap: 8px; align-items: center; }
+  .tl-time { color: #444; font-size: 10px; min-width: 55px; }
+  .tl-badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: bold; }
+  .tl-badge-ok { background: #1b3a1b; color: #4caf50; }
+  .tl-badge-err { background: #3a1b1b; color: #f44336; }
+  .tl-badge-report { background: #1b2a3a; color: #00d4ff; }
+  .tl-type { font-weight: bold; color: #ccc; font-size: 12px; }
+  .tl-detail { color: #777; margin-top: 2px; font-size: 11px; line-height: 1.3; word-break: break-all; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #0f0f1a; }
+  ::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a6a; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <span class="dot online" id="status-dot"></span>
+    <span class="conn-label" id="conn-label">在线</span>
+    <h1>QClaw 监控面板</h1>
+  </div>
+  <div class="header-right">
+    <span id="tick-status" style="font-size:11px;padding:2px 8px;border-radius:4px;background:#1b3a1b;color:#4caf50">运行中</span>
+    <span class="refresh-time" id="refresh-time">--:--:--</span>
+  </div>
+</div>
+
+<!-- Status Cards -->
+<div class="status-panel">
+  <!-- 生命值 -->
+  <div class="status-card">
+    <div class="card-title"><span class="card-icon">❤</span> 生命值</div>
+    <div class="bar-wrap"><div class="bar-fill good" id="hp-bar" style="width:0%"></div></div>
+    <div><span class="card-value good" id="hp-val">-</span><span class="card-sub"> / 20</span></div>
+  </div>
+  <!-- 饥饿度 -->
+  <div class="status-card">
+    <div class="card-title"><span class="card-icon">🍗</span> 饥饿度</div>
+    <div class="bar-wrap"><div class="bar-fill good" id="food-bar" style="width:0%"></div></div>
+    <div><span class="card-value good" id="food-val">-</span><span class="card-sub"> / 20</span></div>
+  </div>
+  <!-- 位置 -->
+  <div class="status-card">
+    <div class="card-title"><span class="card-icon">📍</span> 位置坐标</div>
+    <div class="pos-grid">
+      <span class="pos-axis">X</span><span class="pos-val" id="pos-x">-</span>
+      <span class="pos-axis">Y</span><span class="pos-val" id="pos-y">-</span>
+      <span class="pos-axis">Z</span><span class="pos-val" id="pos-z">-</span>
+    </div>
+  </div>
+  <!-- 状态 -->
+  <div class="status-card">
+    <div class="card-title"><span class="card-icon">🎮</span> 游戏状态</div>
+    <div class="state-row"><span class="state-label">模式</span><span class="state-val" id="st-mode">-</span></div>
+    <div class="state-row"><span class="state-label">手持</span><span class="state-val" id="st-held">-</span></div>
+  </div>
+</div>
+
+<!-- Inventory Strip -->
+<div class="inv-strip">
+  <div class="inv-title"><span class="card-icon">🎒</span> 背包 <span class="inv-count" id="inv-count">- / -</span></div>
+  <div class="inv-items" id="inv-items"><span class="inv-empty">等待数据...</span></div>
+</div>
+
+<!-- Main: Sidebar + Timeline -->
+<div class="main">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Agent Decision -->
+    <div class="sidebar-section">
+      <h2>🧠 Agent 决策</h2>
+      <div id="report-content" class="no-report">等待 Agent 汇报...</div>
+    </div>
+
+    <!-- Events -->
+    <div class="collapse-header" onclick="toggle(this)">
+      <h2>⚡ 事件 <span id="event-count" class="tag">0</span></h2>
+      <span class="collapse-arrow">&#9654;</span>
+    </div>
+    <div class="collapse-body" id="event-list"></div>
+
+    <!-- Memory -->
+    <div class="collapse-header" onclick="toggle(this)">
+      <h2>🗺 记忆 <span id="memory-count" class="tag">0</span></h2>
+      <span class="collapse-arrow">&#9654;</span>
+    </div>
+    <div class="collapse-body" id="memory-body"></div>
+
+    <!-- Experience -->
+    <div class="collapse-header" onclick="toggle(this)">
+      <h2>📚 经验 <span id="exp-count" class="tag">0</span></h2>
+      <span class="collapse-arrow">&#9654;</span>
+    </div>
+    <div class="collapse-body" id="exp-list"></div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-area">
+    <div class="timeline-header">
+      <h2>📋 实时动作流</h2>
+      <span class="timeline-count" id="tl-count">0 条记录</span>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3001';
+let lastLogTime = 0;
+let lastReportTs = 0;
+let timelineItems = [];
+const MAX_TIMELINE = 200;
+
+function toggle(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+function cls(val, low, high) {
+  if (val <= low) return 'danger';
+  if (val <= high) return 'warn';
+  return 'good';
+}
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('zh-CN', { hour12: false });
+}
+
+function truncate(s, n) {
+  if (!s) return '';
+  const str = typeof s === 'string' ? s : JSON.stringify(s);
+  return str.length > n ? str.slice(0, n) + '...' : str;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function fetchJSON(url) {
+  try { return await (await fetch(url)).json(); } catch { return null; }
+}
+
+// Item name translation map (common items)
+const itemNames = {
+  'oak_log': '橡木原木', 'spruce_log': '云杉原木', 'birch_log': '白桦原木',
+  'oak_planks': '橡木板', 'spruce_planks': '云杉木板', 'birch_planks': '白桦木板',
+  'stick': '木棍', 'cobblestone': '圆石', 'stone': '石头', 'dirt': '泥土',
+  'sand': '沙子', 'gravel': '沙砾', 'iron_ore': '铁矿石', 'iron_ingot': '铁锭',
+  'gold_ore': '金矿石', 'gold_ingot': '金锭', 'diamond': '钻石',
+  'diamond_ore': '钻石矿石', 'coal': '煤炭', 'coal_ore': '煤矿石',
+  'raw_iron': '粗铁', 'raw_gold': '粗金',
+  'wooden_pickaxe': '木镐', 'stone_pickaxe': '石镐', 'iron_pickaxe': '铁镐',
+  'diamond_pickaxe': '钻石镐', 'wooden_axe': '木斧', 'stone_axe': '石斧',
+  'iron_axe': '铁斧', 'diamond_axe': '钻石斧',
+  'wooden_shovel': '木锹', 'stone_shovel': '石锹', 'iron_shovel': '铁锹',
+  'wooden_sword': '木剑', 'stone_sword': '石剑', 'iron_sword': '铁剑',
+  'diamond_sword': '钻石剑',
+  'crafting_table': '工作台', 'furnace': '熔炉', 'chest': '箱子',
+  'bread': '面包', 'apple': '苹果', 'cooked_beef': '牛排', 'cooked_porkchop': '熟猪排',
+  'cooked_chicken': '熟鸡肉', 'cooked_mutton': '熟羊肉',
+  'beef': '生牛肉', 'porkchop': '生猪排', 'chicken': '生鸡肉', 'mutton': '生羊肉',
+  'torch': '火把', 'charcoal': '木炭', 'glass': '玻璃',
+  'bucket': '桶', 'water_bucket': '水桶', 'lava_bucket': '熔岩桶',
+  'leather': '皮革', 'bone': '骨头', 'string': '线', 'feather': '羽毛',
+  'arrow': '箭', 'bow': '弓', 'shield': '盾牌',
+};
+
+function itemZh(name) {
+  return itemNames[name] || name;
+}
+
+const modeNames = { 'survival': '生存', 'creative': '创造', 'adventure': '冒险', 'spectator': '旁观' };
+
+async function refresh() {
+  // State
+  const state = await fetchJSON(`${API}/state`);
+  const dot = document.getElementById('status-dot');
+  const connLabel = document.getElementById('conn-label');
+
+  if (state && !state.error) {
+    dot.className = 'dot online';
+    connLabel.textContent = '在线';
+    connLabel.className = 'conn-label';
+
+    // HP
+    const hpCls = cls(state.health, 5, 10);
+    document.getElementById('hp-bar').style.width = (state.health / 20 * 100) + '%';
+    document.getElementById('hp-bar').className = 'bar-fill ' + hpCls;
+    const hpVal = document.getElementById('hp-val');
+    hpVal.textContent = Math.round(state.health);
+    hpVal.className = 'card-value ' + hpCls;
+
+    // Food
+    const foodCls = cls(state.food, 4, 10);
+    document.getElementById('food-bar').style.width = (state.food / 20 * 100) + '%';
+    document.getElementById('food-bar').className = 'bar-fill ' + foodCls;
+    const foodVal = document.getElementById('food-val');
+    foodVal.textContent = Math.round(state.food);
+    foodVal.className = 'card-value ' + foodCls;
+
+    // Position
+    const p = state.position;
+    document.getElementById('pos-x').textContent = Math.round(p.x);
+    document.getElementById('pos-y').textContent = Math.round(p.y);
+    document.getElementById('pos-z').textContent = Math.round(p.z);
+
+    // Game state
+    document.getElementById('st-mode').textContent = modeNames[state.gameMode] || state.gameMode || '-';
+    document.getElementById('st-held').textContent = state.heldItem ? `${itemZh(state.heldItem.name)} x${state.heldItem.count}` : '空手';
+
+    // Tick status
+    const tickEl = document.getElementById('tick-status');
+    if (state.tickFrozen) {
+      tickEl.textContent = '⏸ 已暂停';
+      tickEl.style.background = '#3a2a1b';
+      tickEl.style.color = '#ff9800';
+    } else {
+      tickEl.textContent = '▶ 运行中';
+      tickEl.style.background = '#1b3a1b';
+      tickEl.style.color = '#4caf50';
+    }
+
+    // Inventory
+    document.getElementById('inv-count').textContent = `${state.inventoryUsed || 0} / ${state.inventoryTotal || 36}`;
+    const invEl = document.getElementById('inv-items');
+    if (state.inventory && state.inventory.length > 0) {
+      invEl.innerHTML = state.inventory.map(i =>
+        `<span class="inv-item">${esc(itemZh(i.name))}<span class="count">x${i.count}</span></span>`
+      ).join('');
+    } else {
+      invEl.innerHTML = '<span class="inv-empty">背包为空</span>';
+    }
+  } else {
+    dot.className = 'dot offline';
+    connLabel.textContent = '离线';
+    connLabel.className = 'conn-label offline';
+    document.getElementById('hp-bar').style.width = '0%';
+    document.getElementById('hp-val').textContent = '-';
+    document.getElementById('food-bar').style.width = '0%';
+    document.getElementById('food-val').textContent = '-';
+    document.getElementById('pos-x').textContent = '-';
+    document.getElementById('pos-y').textContent = '-';
+    document.getElementById('pos-z').textContent = '-';
+    document.getElementById('st-mode').textContent = '-';
+    document.getElementById('st-held').textContent = '-';
+    document.getElementById('inv-count').textContent = '- / -';
+    document.getElementById('inv-items').innerHTML = '<span class="inv-empty">等待连接...</span>';
+  }
+
+  // Report
+  const report = await fetchJSON(`${API}/report`);
+  const rc = document.getElementById('report-content');
+  if (report && report.plan) {
+    rc.className = '';
+    rc.innerHTML = `<div class="report-box">
+      <div class="report-field"><div class="report-label">任务</div><div class="report-value">${esc(report.plan)}</div></div>
+      <div class="report-field"><div class="report-label">当前步骤</div><div class="report-value">${esc(report.currentStep || '-')}</div></div>
+      <div class="report-field"><div class="report-label">推理</div><div class="report-value">${esc(report.reasoning || '-')}</div></div>
+      <div class="report-field"><div class="report-label">下一步</div><div class="report-value">${esc(report.nextStep || '-')}</div></div>
+      <div style="color:#444;font-size:10px;margin-top:4px">${report.timestamp ? fmtTime(report.timestamp) : ''}</div>
+    </div>`;
+    if (report.timestamp && report.timestamp > lastReportTs) {
+      lastReportTs = report.timestamp;
+      timelineItems.push({
+        time: report.timestamp,
+        _isReport: true,
+        plan: report.plan,
+        currentStep: report.currentStep,
+        reasoning: report.reasoning,
+      });
+      renderTimeline();
+    }
+  } else {
+    rc.className = 'no-report';
+    rc.textContent = '等待 Agent 汇报...';
+  }
+
+  // Logs (incremental)
+  const logs = await fetchJSON(`${API}/logs?since=${lastLogTime}`);
+  if (logs && logs.logs && logs.logs.length > 0) {
+    for (const l of logs.logs) {
+      timelineItems.push(l);
+      if (l.time > lastLogTime) lastLogTime = l.time;
+    }
+    if (timelineItems.length > MAX_TIMELINE) timelineItems = timelineItems.slice(-MAX_TIMELINE);
+    renderTimeline();
+  }
+
+  // Events
+  const events = await fetchJSON(`${API}/events`);
+  if (events && events.events) {
+    document.getElementById('event-count').textContent = events.events.length;
+    document.getElementById('event-list').innerHTML = events.events.slice(-30).reverse().map(e =>
+      `<div style="padding:2px 0;border-bottom:1px solid #0f0f1a">
+        <span style="color:#444">${fmtTime(e.time)}</span>
+        <span style="color:#ff9800;font-weight:bold"> ${e.type}</span>
+      </div>`
+    ).join('');
+  }
+
+  // Memory
+  const mem = await fetchJSON(`${API}/memory`);
+  if (mem) {
+    const total = (mem.landmarks||[]).length + (mem.resources||[]).length + (mem.facts||[]).length;
+    document.getElementById('memory-count').textContent = total;
+    let html = '';
+    if ((mem.landmarks||[]).length) {
+      html += '<div style="color:#00d4ff;font-size:10px;margin-bottom:4px">地标</div>';
+      html += mem.landmarks.map(l => `<div class="landmark"><span class="landmark-type">${itemZh(l.type)}</span><span class="landmark-pos">(${l.position.x}, ${l.position.y}, ${l.position.z})</span></div>`).join('');
+    }
+    if ((mem.resources||[]).length) {
+      html += '<div style="color:#00d4ff;font-size:10px;margin:6px 0 4px">资源</div>';
+      html += mem.resources.map(r => `<div class="landmark"><span class="landmark-type">${itemZh(r.type)}</span><span class="landmark-pos">(${r.area.x}, ${r.area.y}, ${r.area.z}) x${r.count}</span></div>`).join('');
+    }
+    document.getElementById('memory-body').innerHTML = html || '<div style="color:#444">无</div>';
+  }
+
+  // Experience
+  const exp = await fetchJSON(`${API}/experience`);
+  if (exp) {
+    let total = 0, html = '';
+    for (const [action, info] of Object.entries(exp)) {
+      for (const e of info.experiences) {
+        total++;
+        html += `<div class="exp-item">
+          <span class="exp-action">${action}</span> ${esc(truncate(e.problem, 30))}<br>
+          <span class="exp-solution">${esc(truncate(e.solution, 60))}</span>
+        </div>`;
+      }
+    }
+    document.getElementById('exp-count').textContent = total;
+    document.getElementById('exp-list').innerHTML = html || '<div style="color:#444">无</div>';
+  }
+
+  document.getElementById('refresh-time').textContent = fmtTime(Date.now());
+}
+
+function renderTimeline() {
+  const tl = document.getElementById('timeline');
+  const wasAtBottom = tl.scrollHeight - tl.scrollTop - tl.clientHeight < 40;
+
+  timelineItems.sort((a, b) => a.time - b.time);
+
+  tl.innerHTML = timelineItems.map(l => {
+    if (l._isReport) {
+      return `<div class="tl-item tl-report">
+        <div class="tl-header">
+          <span class="tl-time">${fmtTime(l.time)}</span>
+          <span class="tl-badge tl-badge-report">决策</span>
+          <span class="tl-type">${esc(l.plan || '')}</span>
+        </div>
+        <div class="tl-detail">${esc(l.currentStep || '')} ${l.reasoning ? '| ' + esc(l.reasoning) : ''}</div>
+      </div>`;
+    }
+    const ok = l.success;
+    return `<div class="tl-item ${ok ? 'tl-ok' : 'tl-err'}">
+      <div class="tl-header">
+        <span class="tl-time">${fmtTime(l.time)}</span>
+        <span class="tl-badge ${ok ? 'tl-badge-ok' : 'tl-badge-err'}">${ok ? '成功' : '失败'}</span>
+        <span class="tl-type">${l.type}</span>
+      </div>
+      <div class="tl-detail">${ok ? esc(truncate(l.result, 120)) : '<span style="color:#f44336">' + esc(l.error || '') + '</span>'}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('tl-count').textContent = `${timelineItems.length} 条记录`;
+  if (wasAtBottom) tl.scrollTop = tl.scrollHeight;
+}
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+*.jar
+papers/
+.DS_Store
+.claude/
+CLAUDE.md
+
+# Runtime data
+bot-service/data/logs/
+bot-service/config.json
