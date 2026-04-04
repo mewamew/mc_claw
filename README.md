@@ -133,15 +133,7 @@ mc-claw/
 │       ├── recipes/             # 788 种物品配方数据库
 │       └── blueprints/          # 建筑蓝图
 ├── skills/                      # AI Agent 技能定义
-│   ├── mc-claw/                 # 统一控制技能
-│   ├── mc-survival/             # 自主生存技能
-│   ├── mc-homestead/            # 家园建设技能
-│   └── mc-hello/                # 简单问候技能
-└── specs/                       # 设计文档
-    ├── architecture.md          # 架构设计
-    ├── agent-loop.md            # Agent 迭代协议
-    ├── evolution-system.md      # 进化系统设计
-    └── ...
+│   └── mc-claw/                 # 统一控制技能
 ```
 
 ## AI Agent 集成
