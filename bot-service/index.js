@@ -16,7 +16,7 @@ const config = require('./config.json');
 const MC_HOST = process.env.MC_HOST || 'localhost';
 const MC_PORT = parseInt(process.env.MC_PORT || '18888');
 const MC_VERSION = process.env.MC_VERSION || '1.20';
-const BOT_USERNAME_BASE = process.env.BOT_USERNAME || 'QClaw';
+const BOT_USERNAME_BASE = process.env.BOT_USERNAME || 'Huazi_Bot';
 const HTTP_PORT = parseInt(process.env.HTTP_PORT || '3001');
 
 let bot = null;

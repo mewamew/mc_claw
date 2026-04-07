@@ -45,7 +45,7 @@ function createActionRegistry({ actionHandlers, memoryManager, getBot }) {
       describeSuccess: (result) => `[完成] 放置了 ${result.block}`,
       remember: ({ result }) => {
         if (result.position && memoryManager.isLandmarkBlock(result.block)) {
-          memoryManager.addLandmark(result.block, result.position, { placedBy: 'QClaw' });
+          memoryManager.addLandmark(result.block, result.position, { placedBy: getBot()?.username });
         }
       },
     },
@@ -146,7 +146,7 @@ function createActionRegistry({ actionHandlers, memoryManager, getBot }) {
       describeSuccess: (result) => `[完成] 已放在 ${result.nearPlayer} 旁边`,
       remember: ({ result }) => {
         if (result.position && memoryManager.isLandmarkBlock(result.block)) {
-          memoryManager.addLandmark(result.block, result.position, { placedBy: 'QClaw', nearPlayer: result.nearPlayer });
+          memoryManager.addLandmark(result.block, result.position, { placedBy: getBot()?.username, nearPlayer: result.nearPlayer });
         }
       },
     },

@@ -1,11 +1,11 @@
 ---
 name: mc-claw
-description: Control the QClaw Minecraft bot. Use when the user wants to interact with Minecraft - move, mine, attack, craft, smelt, eat food, explore to find resources, use chests for storage, check inventory, send chat, look around, place blocks, equip items, follow players, find and collect resources, or query item recipes and dependency trees.
+description: Control the Huazi_Bot Minecraft bot. Use when the user wants to interact with Minecraft - move, mine, attack, craft, smelt, eat food, explore to find resources, use chests for storage, check inventory, send chat, look around, place blocks, equip items, follow players, find and collect resources, or query item recipes and dependency trees.
 ---
 
 # MC Claw
 
-Control the QClaw bot in Minecraft. The bot runs as an independent service and is controlled **exclusively through HTTP API calls**. Do NOT use Minecraft game commands — always use the curl commands below.
+Control the Huazi_Bot bot in Minecraft. The bot runs as an independent service and is controlled **exclusively through HTTP API calls**. Do NOT use Minecraft game commands — always use the curl commands below.
 
 **IMPORTANT: All chat messages and responses to the user must be in Chinese (中文).** When using the `chat` command, always write the message in Chinese.
 
