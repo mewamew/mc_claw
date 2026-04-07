@@ -445,6 +445,76 @@ function createBasicHandlers({ getBot, getFollowInterval, setFollowInterval, cle
     throw new Error(`No suitable position found near player. Checked: ${JSON.stringify(checkedPositions)}`);
   }
 
+  async function handleActivateItem(payload) {
+    const bot = getBot();
+    const opts = payload || {};
+
+    if (opts.itemName) {
+      await equipItemByName(bot, opts.itemName, 'hand', { errorPrefix: `No ${opts.itemName} in inventory` });
+    }
+
+    const count = opts.count === undefined ? 5 : Number(opts.count);
+    const interval = opts.interval === undefined ? 400 : Number(opts.interval);
+    const hand = opts.offHand ? 'left' : 'right';
+
+    for (let i = 0; i < count; i++) {
+      bot.swingArm(hand);
+      if (i < count - 1) {
+        await new Promise((r) => setTimeout(r, interval));
+      }
+    }
+
+    const held = opts.offHand ? bot.inventory.slots[45] : bot.heldItem;
+    return {
+      action: 'activateItem',
+      item: held ? held.name : null,
+      hand: opts.offHand ? 'off-hand' : 'hand',
+      swings: count,
+    };
+  }
+
+  async function handleUseItemOn(payload) {
+    const bot = getBot();
+    const { Vec3 } = require('vec3');
+    const { x, y, z, itemName } = payload;
+
+    if (!itemName) {
+      throw new Error('需要指定 itemName（要使用的物品名）');
+    }
+
+    await equipItemByName(bot, itemName, 'hand', { errorPrefix: `No ${itemName} in inventory` });
+
+    const targetVec = new Vec3(x, y, z);
+    const dist = bot.entity.position.distanceTo(targetVec);
+    if (dist > 4) {
+      await gotoNear(bot, { x, y, z }, {
+        reach: 3,
+        timeoutMs: 15000,
+        noPathMessage: `Cannot reach ${x}, ${y}, ${z}`,
+        timeoutMessage: `Navigation timed out for ${x}, ${y}, ${z}`,
+        softTimeout: true,
+      });
+    }
+
+    const block = bot.blockAt(targetVec);
+    if (!block || block.type === 0) {
+      throw new Error(`No block at ${x}, ${y}, ${z}`);
+    }
+
+    await bot.lookAt(targetVec.offset(0.5, 0.5, 0.5));
+    await bot.activateBlock(block);
+    await new Promise(r => setTimeout(r, 250));
+
+    const newBlock = bot.blockAt(targetVec);
+    return {
+      action: 'useItemOn',
+      item: itemName,
+      targetBlock: block.name,
+      resultBlock: newBlock ? newBlock.name : 'unknown',
+      position: { x, y, z },
+    };
+  }
+
   return {
     chat: handleChat,
     goto: handleGoto,
@@ -461,6 +531,8 @@ function createBasicHandlers({ getBot, getFollowInterval, setFollowInterval, cle
     players: handlePlayers,
     scan: handleScan,
     placeNear: handlePlaceNear,
+    useItemOn: handleUseItemOn,
+    activateItem: handleActivateItem,
   };
 }
 

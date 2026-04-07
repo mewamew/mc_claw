@@ -532,6 +532,40 @@ function createBot() {
     if (nearest) autoDefense(nearest);
   }, 500);
 
+  // Idle look-at-player: when doing nothing, turn head to face nearest player
+  let isIdleLooking = false;
+  setInterval(async () => {
+    if (spawnStabilizing || isExecuting || reflexActive || isEating || isSheltering) return;
+    if (botContext.getFollowInterval()) return; // follow handles its own look
+    if (!bot || !bot.entity) return;
+    if (isIdleLooking) return;
+
+    let nearest = null;
+    let nearestDist = 16;
+    for (const name of Object.keys(bot.players)) {
+      if (name === bot.username) continue;
+      const player = bot.players[name];
+      if (!player || !player.entity || !player.entity.position) continue;
+      try {
+        const d = player.entity.position.distanceTo(bot.entity.position);
+        if (d < nearestDist) {
+          nearest = player.entity;
+          nearestDist = d;
+        }
+      } catch (_) {}
+    }
+    if (!nearest) return;
+
+    isIdleLooking = true;
+    try {
+      // Look at the player's head (~1.6 above their feet)
+      await bot.lookAt(nearest.position.offset(0, 1.6, 0));
+    } catch (_) {
+    } finally {
+      isIdleLooking = false;
+    }
+  }, 500);
+
   // Auto-eat: check every 5 seconds
   setInterval(() => { tryAutoEat(); }, 5000);
 

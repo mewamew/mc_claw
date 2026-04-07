@@ -13,6 +13,8 @@ Control the QClaw bot in Minecraft. The bot runs as an independent service and i
 
 Every command is a `curl` call to `http://localhost:3001`. Execute these commands using bash.
 
+**IMPORTANT: 在执行每个 curl 命令之前，先用一句简短的中文描述你要执行的动作。** 例如：「移动到 (100, 64, 200)」「采集 3 个橡木原木」「合成钻石镐 x1」「战斗：攻击僵尸」「扫描附近铁矿」。这样用户可以一眼看出你在做什么，而不是只看到一堆 curl 命令。
+
 ### chat - Send chat message
 
 ```bash
@@ -227,6 +229,30 @@ curl -X POST http://localhost:3001/action -H "Content-Type: application/json" -d
 ```
 
 Supports chest, trapped_chest, and barrel. If no coordinates given, uses the nearest one within 32 blocks.
+
+### activateItem - 在原地挥舞手臂（默认 5 下）
+
+```bash
+# 用当前手中物品挥舞 5 下
+curl -X POST http://localhost:3001/action -H "Content-Type: application/json" -d '{"type": "activateItem"}'
+
+# 先装备某个物品再挥舞
+curl -X POST http://localhost:3001/action -H "Content-Type: application/json" -d '{"type": "activateItem", "payload": {"itemName": "stone_pickaxe"}}'
+
+# 自定义次数和间隔
+curl -X POST http://localhost:3001/action -H "Content-Type: application/json" -d '{"type": "activateItem", "payload": {"count": 10, "interval": 250}}'
+
+# 用副手挥舞
+curl -X POST http://localhost:3001/action -H "Content-Type: application/json" -d '{"type": "activateItem", "payload": {"offHand": true}}'
+```
+
+相当于 Minecraft 里**连续点左键挥手**的动作 —— 在原地挥舞手臂，不会移动也不会攻击/破坏方块。常用于打招呼、表演或测试动画。
+
+参数：
+- `itemName`（可选）：先装备到主手，再挥舞
+- `count`（可选，默认 5）：挥舞次数
+- `interval`（可选，默认 400ms）：每次挥舞间隔
+- `offHand`（可选，默认 false）：用副手挥舞
 
 ### placeNear - Place held item near the nearest player
 

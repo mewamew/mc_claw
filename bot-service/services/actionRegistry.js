@@ -133,6 +133,14 @@ function createActionRegistry({ actionHandlers, memoryManager, getBot }) {
         }
       },
     },
+    useItemOn: {
+      run: actionHandlers.useItemOn,
+      describeSuccess: (result) => `[完成] 用 ${result.item} 对 ${result.targetBlock} 使用 → ${result.resultBlock}`,
+    },
+    activateItem: {
+      run: actionHandlers.activateItem,
+      describeSuccess: (result) => `[挥舞] ${result.item || '空手'} x${result.swings}`,
+    },
     placeNear: {
       run: actionHandlers.placeNear,
       describeSuccess: (result) => `[完成] 已放在 ${result.nearPlayer} 旁边`,
